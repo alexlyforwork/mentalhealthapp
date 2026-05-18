@@ -16,6 +16,7 @@ struct GoogleSignInButton: UIViewRepresentable{
         return button
     }
     func updateUIView(_ uiView: GIDSignInButton, context: Context) {
+        context.coordinator.authViewModel = authViewModel
     }
     func makeCoordinator() -> Coordinator {
         return Coordinator(authViewModel: authViewModel)
@@ -31,6 +32,33 @@ struct GoogleSignInButton: UIViewRepresentable{
                             return
                         }
             authViewModel.signInWithGoogle(presenting: rootViewController)
+        }
+    }
+}
+
+struct GoogleSignOutButton: UIViewRepresentable {
+    @EnvironmentObject var authViewModel: AuthViewModel
+    func makeUIView(context: Context) -> UIButton {
+        let button = UIButton()
+        button.setTitle("Sign out", for: .normal)
+        button.setTitleColor(.black, for: .normal)
+        button.addTarget(context.coordinator, action: #selector(Coordinator.handleSignOut), for: .touchUpInside)
+        return button
+    }
+    func updateUIView(_ uiView: UIButton, context: Context) {
+        context.coordinator.authViewModel = authViewModel
+    }
+    
+    func makeCoordinator() -> Coordinator {
+        return Coordinator(authViewModel: authViewModel)
+    }
+    class Coordinator: NSObject{
+        var authViewModel : AuthViewModel
+        init(authViewModel: AuthViewModel){
+            self.authViewModel = authViewModel
+        }
+        @objc func handleSignOut(){
+            authViewModel.signOutWithGoogle()
         }
     }
 }

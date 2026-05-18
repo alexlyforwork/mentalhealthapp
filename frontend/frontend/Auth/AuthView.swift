@@ -7,8 +7,9 @@
 
 import SwiftUI
 
-class AuthView{
+enum AuthView{
     struct SignInView: View {
+        @EnvironmentObject var authViewModel: AuthViewModel
         var body: some View {
         
             GoogleSignInButton()
@@ -16,6 +17,14 @@ class AuthView{
         
         }
     }
+    struct SignOutView: View {
+        @EnvironmentObject var authViewModel: AuthViewModel
+        var body: some View{
+            GoogleSignOutButton()
+                .frame(width: 240, height: 50)
+        }
+    }
+        
 }
 
 #Preview {

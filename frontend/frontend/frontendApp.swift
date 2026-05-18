@@ -6,21 +6,24 @@
 //
 
 import SwiftUI
+import UIKit
 
 @main
 struct YourApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject var authViewModel = AuthViewModel()
 
-  var body: some Scene {
-    WindowGroup {
-        if authViewModel.isSignedIn {
-            ContentView()
-                .environmentObject(authViewModel)
-        } else{
-            AuthView.SignInView()
-                .environmentObject(authViewModel)
+    var body: some Scene {
+        WindowGroup {
+            Group {
+                if authViewModel.isSignedIn {
+                    AuthView.SignOutView()
+                        .environmentObject(authViewModel)
+                } else {
+                    AuthView.SignInView()
+                        .environmentObject(authViewModel)
+                }
+            }
         }
-      }
     }
 }
