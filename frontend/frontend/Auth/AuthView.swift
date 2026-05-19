@@ -11,6 +11,8 @@ enum AuthView{
     struct SignInView: View {
         @EnvironmentObject var authViewModel: AuthViewModel
         var body: some View{
+            Text("Welcome to Mentalert")
+                .foregroundColor(Color.blue)
             GoogleSignInButton()
                 .modifier(AuthButton(width: UIScreen.main.bounds.size.width/2, height: UIScreen.main.bounds.size.height/10))
             
@@ -24,8 +26,4 @@ enum AuthView{
         }
     }
         
-}
-
-#Preview {
-    AuthView.SignInView()
 }

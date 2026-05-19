@@ -24,7 +24,6 @@ class GoogleSignInCoordinator: NSObject{
     }
 }
 
-
 class GoogleSignOutCoordinator: NSObject{
     var authViewModel : AuthViewModel
     init(authViewModel: AuthViewModel){
