@@ -10,18 +10,17 @@ import SwiftUI
 enum AuthView{
     struct SignInView: View {
         @EnvironmentObject var authViewModel: AuthViewModel
-        var body: some View {
-        
+        var body: some View{
             GoogleSignInButton()
-                .frame(width: 240, height: 50)
-        
+                .modifier(AuthButton(width: UIScreen.main.bounds.size.width/2, height: UIScreen.main.bounds.size.height/10))
+            
         }
     }
     struct SignOutView: View {
         @EnvironmentObject var authViewModel: AuthViewModel
         var body: some View{
             GoogleSignOutButton()
-                .frame(width: 240, height: 50)
+                .modifier(AuthButton(width: UIScreen.main.bounds.size.width/2, height: UIScreen.main.bounds.size.height/10))
         }
     }
         
