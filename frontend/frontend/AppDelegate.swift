@@ -7,19 +7,31 @@
 
 import UIKit
 import FirebaseCore
-import GoogleSignIn
+//import GoogleSignIn
+import AppAuth
 
 class AppDelegate: NSObject, UIApplicationDelegate {
+    var  currentAuthFlow: OIDExternalUserAgentSession?
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
-        FirebaseApp.configure()
-        print("✅ Firebase configured")
+        
+//        FirebaseApp.configure()
+//        print("✅ Firebase configured")
+        Task {
+            await CognitoAuthManager.shared.discover()
+            print("✅ Cognito discovered")
+        }
         return true
     }
     
     func application(_ application: UIApplication,
                      open url: URL,
                      options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-      return GIDSignIn.sharedInstance.handle(url)
+//      return GIDSignIn.sharedInstance.handle(url)
+        if let authFlow = CognitoAuthManager.shared.currentAuthFlow, authFlow.resumeExternalUserAgentFlow(with: url){
+            currentAuthFlow = nil
+            return true
+        }
+        return false
     }
 }

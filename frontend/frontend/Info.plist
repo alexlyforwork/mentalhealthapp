@@ -10,8 +10,20 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.665258793371-3455e2tb96ufa8djf2gb9b64luk8ggn9</string>
+                <string>frontend</string>
 			</array>
 		</dict>
 	</array>
+    <key>CognitoIdentityProvider</key>
+            <dict>
+                <key>Default</key>
+                <dict>
+                   <key>PoolId</key>
+                    <string>ap-southeast-1_AF5GVSSRx</string>
+                    <key>Region</key>
+                    <string>ap-southeast-1</string>
+                </dict>
+            </dict>
 </dict>
+
 </plist>
