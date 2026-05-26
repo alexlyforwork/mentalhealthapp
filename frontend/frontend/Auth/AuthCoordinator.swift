@@ -10,66 +10,6 @@ import AppAuth
 import WebKit
 import KeychainSwift
 
-class GoogleSignInCoordinator: NSObject{
-    var authViewModel : AuthViewModel
-    init(authViewModel: AuthViewModel){
-        self.authViewModel = authViewModel
-    }
-    @objc func handleSignIn() {
-        Task {
-            guard let windowScene = await UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                let rootViewController = await windowScene.windows.first?.rootViewController else {
-                            return
-                    }
-            authViewModel.signInWithGoogle(presenting: rootViewController)
-        }
-    }
-}
-
-class GoogleSignOutCoordinator: NSObject{
-    var authViewModel : AuthViewModel
-    init(authViewModel: AuthViewModel){
-        self.authViewModel = authViewModel
-    }
-    @objc func handleSignOut(){
-        authViewModel.signOutWithGoogle()
-    }
-}
-
-class SignInCoordinator: NSObject{
-    var authViewModel : AuthViewModel
-    init(authViewModel: AuthViewModel){
-        self.authViewModel = authViewModel
-    }
-    @objc func handleSignIn() {
-        Task {
-            guard let windowScene = await UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                let rootViewController = await windowScene.windows.first?.rootViewController else {
-                            return
-                    }
-            await CognitoAuthManager.shared.signIn(from: rootViewController)
-            // Sync Cognito's result back to the AuthViewModel that the UI observes
-            await MainActor.run {
-                authViewModel.isSignedIn = CognitoAuthManager.shared.isSignedIn
-            }
-        }
-    }
-}
-class SignOutCoordinator: NSObject{
-    var authViewModel : AuthViewModel
-    init(authViewModel: AuthViewModel){
-        self.authViewModel = authViewModel
-    }
-    @objc func handleSignOut(){
-        Task{
-            await CognitoAuthManager.shared.signOut()
-            await MainActor.run {
-                authViewModel.isSignedIn = false
-            }
-        }
-    }
-}
-
 @MainActor
 class CognitoAuthManager: ObservableObject {
     @Published var isSignedIn = false
@@ -79,6 +19,12 @@ class CognitoAuthManager: ObservableObject {
     private var authState: OIDAuthState?
     public var currentAuthFlow: OIDExternalUserAgentSession?
     
+    func restoreSession() {
+        let keychain = KeychainSwift()
+        if keychain.get("accessToken") != nil {
+            self.isSignedIn = true
+        }
+    }
     func discover() async {
         // discovers endpoints
         guard let forIssuer = URL(string: CognitoConfig.issuer) else {
@@ -200,3 +146,24 @@ class CognitoAuthManager: ObservableObject {
     }
 }
 
+class SignInCoordinator: NSObject{
+    var cognitoAuthManager: CognitoAuthManager = CognitoAuthManager.shared
+    @objc func handleSignIn() {
+        Task {
+            guard let windowScene = await UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                let rootViewController = await windowScene.windows.first?.rootViewController else {
+                            return
+                    }
+            await cognitoAuthManager.signIn(from: rootViewController)
+            // Sync Cognito's result back to the AuthViewModel that the UI observes
+        }
+    }
+}
+class SignOutCoordinator: NSObject{
+    var cognitoAuthManager: CognitoAuthManager = CognitoAuthManager.shared
+    @objc func handleSignOut(){
+        Task{
+            await cognitoAuthManager.signOut()
+        }
+    }
+}

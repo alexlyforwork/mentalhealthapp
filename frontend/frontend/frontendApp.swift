@@ -11,17 +11,17 @@ import UIKit
 @main
 struct YourApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
-    @StateObject var authViewModel = AuthViewModel()
+    @StateObject var cognitoAuthManager =  CognitoAuthManager.shared
 
     var body: some Scene {
         WindowGroup {
             Group {
-                if authViewModel.isSignedIn {
+                if cognitoAuthManager.isSignedIn {
                     AuthView.SignOutView()
-                        .environmentObject(authViewModel)
+                        .environmentObject(cognitoAuthManager)
                 } else {
                     AuthView.SignInView()
-                        .environmentObject(authViewModel)
+                        .environmentObject(cognitoAuthManager)
                 }
             }
         }

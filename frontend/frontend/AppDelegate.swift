@@ -14,12 +14,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     var  currentAuthFlow: OIDExternalUserAgentSession?
     func application(_ application: UIApplication,
                      didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
-        
-//        FirebaseApp.configure()
-//        print("✅ Firebase configured")
         Task {
             await CognitoAuthManager.shared.discover()
             print("✅ Cognito discovered")
+            CognitoAuthManager.shared.restoreSession()
         }
         return true
     }
@@ -27,7 +25,6 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication,
                      open url: URL,
                      options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-//      return GIDSignIn.sharedInstance.handle(url)
         if let authFlow = CognitoAuthManager.shared.currentAuthFlow, authFlow.resumeExternalUserAgentFlow(with: url){
             currentAuthFlow = nil
             return true

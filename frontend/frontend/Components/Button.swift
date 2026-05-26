@@ -21,25 +21,8 @@ struct AuthButton: ViewModifier {
     }
 }
 
-struct GoogleSignInButton: UIViewRepresentable{
-    @EnvironmentObject var authViewModel: AuthViewModel
-    func makeUIView(context: Context) -> UIButton {
-        let button = UIButton()
-        button.setTitle("Sign in", for: .normal)
-        button.setTitleColor(.black, for: .normal)
-        button.addTarget(context.coordinator, action: #selector(Coordinator.handleSignIn), for: .touchUpInside)
-        return button
-    }
-    func updateUIView(_ uiView: UIButton, context: Context) {
-        context.coordinator.authViewModel = authViewModel
-    }
-    func makeCoordinator() -> GoogleSignInCoordinator {
-        return GoogleSignInCoordinator(authViewModel: authViewModel)
-    }
-}
-
 struct SignInButton: UIViewRepresentable{
-    @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var cognitoAuthManager: CognitoAuthManager
     func makeUIView(context: Context) -> UIButton {
         let button = UIButton()
         button.setTitle("Sign in", for: .normal)
@@ -48,33 +31,15 @@ struct SignInButton: UIViewRepresentable{
         return button
     }
     func updateUIView(_ uiView: UIButton, context: Context) {
-        context.coordinator.authViewModel = authViewModel
+        context.coordinator.cognitoAuthManager = cognitoAuthManager
     }
     func makeCoordinator() -> SignInCoordinator {
-        return SignInCoordinator(authViewModel: authViewModel)
-    }
-}
-
-struct GoogleSignOutButton: UIViewRepresentable {
-    @EnvironmentObject var authViewModel: AuthViewModel
-    func makeUIView(context: Context) -> UIButton {
-        let button = UIButton()
-        button.setTitle("Sign out", for: .normal)
-        button.setTitleColor(.black, for: .normal)
-        button.addTarget(context.coordinator, action: #selector(Coordinator.handleSignOut), for: .touchUpInside)
-        return button
-    }
-    func updateUIView(_ uiView: UIButton, context: Context) {
-        context.coordinator.authViewModel = authViewModel
-    }
-    
-    func makeCoordinator() -> GoogleSignOutCoordinator {
-        return GoogleSignOutCoordinator(authViewModel: authViewModel)
+        return SignInCoordinator()
     }
 }
 
 struct SignOutButton: UIViewRepresentable {
-    @EnvironmentObject var authViewModel: AuthViewModel
+    @EnvironmentObject var cognitoAuthManager: CognitoAuthManager
     func makeUIView(context: Context) -> UIButton {
         let button = UIButton()
         button.setTitle("Sign out", for: .normal)
@@ -83,11 +48,11 @@ struct SignOutButton: UIViewRepresentable {
         return button
     }
     func updateUIView(_ uiView: UIButton, context: Context) {
-        context.coordinator.authViewModel = authViewModel
+        context.coordinator.cognitoAuthManager = cognitoAuthManager
     }
     
     func makeCoordinator() -> SignOutCoordinator {
-        return SignOutCoordinator(authViewModel: authViewModel)
+        return SignOutCoordinator()
     }
 }
 
