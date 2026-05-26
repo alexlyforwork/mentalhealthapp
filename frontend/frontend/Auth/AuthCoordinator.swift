@@ -8,6 +8,7 @@
 import SwiftUI
 import AppAuth
 import WebKit
+import KeychainSwift
 
 class GoogleSignInCoordinator: NSObject{
     var authViewModel : AuthViewModel
@@ -73,7 +74,6 @@ class SignOutCoordinator: NSObject{
 class CognitoAuthManager: ObservableObject {
     @Published var isSignedIn = false
     @Published var errorMessage = ""
-    @Published var isDiscovering = true
     static let shared = CognitoAuthManager()
     private var configuration: OIDServiceConfiguration?
     private var authState: OIDAuthState?
@@ -83,23 +83,19 @@ class CognitoAuthManager: ObservableObject {
         // discovers endpoints
         guard let forIssuer = URL(string: CognitoConfig.issuer) else {
             print("Error creating URL for : \(CognitoConfig.issuer)")
-            isDiscovering = false
             return
         }
         let result: OIDServiceConfiguration? = await withCheckedContinuation { continuation in
-            print("start discover")
             OIDAuthorizationService.discoverConfiguration(forIssuer: forIssuer) { configuration, error in
                 guard let config = configuration else {
                     print("Error retrieving discovery document: \(error?.localizedDescription ?? "DEFAULT_ERROR")")
                     continuation.resume(returning: nil)
                     return
                 }
-                print("end discover")
                 continuation.resume(returning: config)
             }
         }
         self.configuration = result
-        self.isDiscovering = false
     }
     func signIn(from presentingVC: UIViewController) async {
         // builds authentication request
@@ -112,27 +108,13 @@ class CognitoAuthManager: ObservableObject {
             print("❌ signIn: configuration still nil after discover() — check CognitoConfig.issuer and network")
             return
         }
-//        await MainActor.run {
-//            WKWebsiteDataStore.default().httpCookieStore.getAllCookies { cookies in
-//                    print("Total cookies: \(cookies.count)")
-//                    for cookie in cookies {
-//                        print("Cookie: \(cookie.name) = \(cookie.value) | domain: \(cookie.domain)")
-//                    }
-//                }
-//                WKWebsiteDataStore.default().removeData(
-//                    ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(),
-//                    modifiedSince: Date(timeIntervalSince1970: 0)
-//                ) {
-//                    print("cookies cleared")
-//                }
-//            }
         let request = OIDAuthorizationRequest(
             configuration: configuration,
           clientId: CognitoConfig.clientID,
           scopes: [OIDScopeOpenID,OIDScopeProfile],
             redirectURL: redirectURI,
           responseType: OIDResponseTypeCode,
-          additionalParameters: nil)
+          additionalParameters: ["prompt": "login"])
         print("about to present auth")
         let result: OIDAuthState? = await withCheckedContinuation { continuation in
             print("inside continuation")
@@ -140,12 +122,12 @@ class CognitoAuthManager: ObservableObject {
                 byPresenting: request,
                 presenting: presentingVC
             ) { authState, error in
-                print("callback fired")
-                print(authState)
                 if let authState = authState {
-                    print("Got authorization tokens. Access token: \(authState.lastTokenResponse?.accessToken ?? "DEFAULT_TOKEN")")
+                    let keychain = KeychainSwift()
+                    keychain.set(authState.lastTokenResponse?.accessToken ?? "DEFAULT_TOKEN", forKey: "accessToken")
+                    keychain.set(authState.lastTokenResponse?.refreshToken ?? "DEFAULT_TOKEN", forKey: "refreshToken")
+                    keychain.set(authState.lastTokenResponse?.idToken ?? "DEFAULT_TOKEN", forKey: "idToken")
                 } else {
-                    print(error)
                     print("Authorization error: \(error?.localizedDescription ?? "DEFAULT_ERROR")")
                 }
                 continuation.resume(returning: authState)
@@ -188,6 +170,15 @@ class CognitoAuthManager: ObservableObject {
     }
     func signOut() async {
         guard let authState = authState else {return }
+        
+        let keychain = KeychainSwift()
+        keychain.delete("accessToken")
+        keychain.delete("refreshToken")
+        keychain.delete("idToken")
+        
+        self.authState = nil
+        self.isSignedIn = false
+        
         guard
           let endSessionEndpoint = authState.lastAuthorizationResponse.request.configuration
             .discoveryDocument?.endSessionEndpoint
@@ -199,16 +190,13 @@ class CognitoAuthManager: ObservableObject {
           // Prepare the logout URL with the ID token hint and redirect URI
           var components = URLComponents(url: endSessionEndpoint, resolvingAgainstBaseURL: false)!
           components.queryItems = [
-            URLQueryItem(name: "client_id", value: CognitoConfig.clientID),  // Your client ID
-            URLQueryItem(name: "logout_uri", value: CognitoConfig.logoutURL),  // Your app's redirect URI
+            URLQueryItem(name: "client_id", value: CognitoConfig.clientID),
+            URLQueryItem(name: "logout_uri", value: CognitoConfig.logoutURL),
           ]
-
           if let logoutURL = components.url {
             UIApplication.shared.open(logoutURL, options: [:], completionHandler: nil)
-            self.isSignedIn = false
           }
         }
-        
     }
 }
 

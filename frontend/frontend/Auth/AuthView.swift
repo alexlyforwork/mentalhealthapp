@@ -17,7 +17,6 @@ enum AuthView{
 //                .modifier(AuthButton(width: UIScreen.main.bounds.size.width/2, height: UIScreen.main.bounds.size.height/10))
             SignInButton()
                 .modifier(AuthButton(width: UIScreen.main.bounds.size.width/2, height: UIScreen.main.bounds.size.height/10))
-//                .disabled(CognitoAuthManager.shared.isDiscovering)
         }
     }
     struct SignOutView: View {
