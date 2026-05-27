@@ -18,9 +18,16 @@ class CognitoAuthManager: ObservableObject {
     private var configuration: OIDServiceConfiguration?
     private var authState: OIDAuthState?
     public var currentAuthFlow: OIDExternalUserAgentSession?
-    
-    func restoreSession() {
+     
+    func restoreSession() async{
         let keychain = KeychainSwift()
+        if let expiryString = keychain.get("tokenExpiryTime"),
+           let expiryTime = TimeInterval(expiryString),
+           Date().timeIntervalSince1970 > expiryTime {
+
+            await self.signOut()
+            return
+        }
         if keychain.get("accessToken") != nil {
             self.isSignedIn = true
         }
@@ -70,9 +77,12 @@ class CognitoAuthManager: ObservableObject {
             ) { authState, error in
                 if let authState = authState {
                     let keychain = KeychainSwift()
+                    print(authState.lastTokenResponse?.accessToken)
                     keychain.set(authState.lastTokenResponse?.accessToken ?? "DEFAULT_TOKEN", forKey: "accessToken")
                     keychain.set(authState.lastTokenResponse?.refreshToken ?? "DEFAULT_TOKEN", forKey: "refreshToken")
                     keychain.set(authState.lastTokenResponse?.idToken ?? "DEFAULT_TOKEN", forKey: "idToken")
+                    let expiryTime = Date().addingTimeInterval(3600 * 24 * 1) //1 day
+                    keychain.set(String(expiryTime.timeIntervalSince1970), forKey: "tokenExpiryTime")
                 } else {
                     print("Authorization error: \(error?.localizedDescription ?? "DEFAULT_ERROR")")
                 }
@@ -115,16 +125,14 @@ class CognitoAuthManager: ObservableObject {
         }
     }
     func signOut() async {
-        guard let authState = authState else {return }
-        
         let keychain = KeychainSwift()
         keychain.delete("accessToken")
         keychain.delete("refreshToken")
         keychain.delete("idToken")
-        
+        keychain.delete("tokenExpiryTime")
         self.authState = nil
         self.isSignedIn = false
-        
+        guard let authState = authState else {return }
         guard
           let endSessionEndpoint = authState.lastAuthorizationResponse.request.configuration
             .discoveryDocument?.endSessionEndpoint
@@ -155,7 +163,6 @@ class SignInCoordinator: NSObject{
                             return
                     }
             await cognitoAuthManager.signIn(from: rootViewController)
-            // Sync Cognito's result back to the AuthViewModel that the UI observes
         }
     }
 }

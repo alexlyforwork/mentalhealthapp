@@ -17,7 +17,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         Task {
             await CognitoAuthManager.shared.discover()
             print("✅ Cognito discovered")
-            CognitoAuthManager.shared.restoreSession()
+            await CognitoAuthManager.shared.restoreSession()
         }
         return true
     }
